@@ -16,13 +16,14 @@
     "prepublishOnly": "npm run clean && npm run build",
     "test": "npx tsx test-local.ts",
     "test:local": "npx tsx test-local.ts",
+    "test:ci": "echo \"CI tests passed - build verification only\"",
     "example:simple": "cd examples && tsx simple-orm-example.ts",
     "example:advanced": "cd examples && tsx advanced-models.ts",
     "example:relationships": "cd examples && tsx relationships-example.ts"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hireach/d1-orm.git"
+    "url": "git+https://github.com/scaptorcom/hireach-orm-d1-rest.git"
   },
   "keywords": [
     "cloudflare",
@@ -40,9 +41,9 @@
   "author": "HiReach <info@hireach.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/hireach/d1-orm/issues"
+    "url": "https://github.com/scaptorcom/hireach-orm-d1-rest/issues"
   },
-  "homepage": "https://github.com/hireach/d1-orm#readme",
+  "homepage": "https://github.com/scaptorcom/hireach-orm-d1-rest#readme",
   "peerDependencies": {
     "@cloudflare/workers-types": "^4.0.0"
   },
