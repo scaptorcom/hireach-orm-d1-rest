@@ -188,4 +188,4 @@ const user = await User.create({
 4. **Publish to npm**: `npm publish`
 5. **Share with the community**! 🚀
 
-Your D1 ORM is now ready for the world! 🌟
+Your D1 ORM is now ready for the world! 🌟.
