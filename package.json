@@ -1,6 +1,6 @@
 {
   "name": "hireach-d1",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A powerful, type-safe ORM for Cloudflare D1 with a familiar Sequelize/Mongoose-like API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
