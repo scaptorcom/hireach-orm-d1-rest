@@ -2,7 +2,7 @@
 
 A powerful, type-safe ORM for Cloudflare D1 that provides a familiar API similar to Sequelize and Mongoose. Build database applications with ease using schema definitions, query builders, hooks, and more!
 
-[![npm version](https://badge.fury.io/js/hireach-orm-d1-rest.svg)](https://badge.fury.io/js/hireach-orm-d1-rest)
+[![npm version](https://badge.fury.io/js/hireach-d1.svg)](https://badge.fury.io/js/hireach-d1)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## 🚀 Features
@@ -21,7 +21,7 @@ A powerful, type-safe ORM for Cloudflare D1 that provides a familiar API similar
 ## 📦 Installation
 
 ```bash
-npm install hireach-orm-d1-rest
+npm install hireach-d1
 ```
 
 ## 🎯 Quick Start
@@ -29,7 +29,7 @@ npm install hireach-orm-d1-rest
 ### 1. Initialize the ORM
 
 ```typescript
-import { D1ORM, createDatabaseService } from "hireach-orm-d1-rest";
+import { D1ORM, createDatabaseService } from "hireach-d1";
 
 // Initialize database and ORM
 const db = await createDatabaseService();

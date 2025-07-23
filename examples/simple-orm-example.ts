@@ -1,5 +1,5 @@
 /**
- * Simple Usage Example - How to use hireach-orm-d1-rest as an external library
+ * Simple Usage Example - How to use hireach-d1 as an external library
  * This shows the simplest way to get started with the ORM
  */
 
