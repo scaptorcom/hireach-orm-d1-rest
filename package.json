@@ -1,5 +1,5 @@
 {
-  "name": "@hireach/d1-orm",
+  "name": "hireach-orm-d1-rest",
   "version": "1.0.0",
   "description": "A powerful, type-safe ORM for Cloudflare D1 with a familiar Sequelize/Mongoose-like API",
   "main": "dist/index.js",
