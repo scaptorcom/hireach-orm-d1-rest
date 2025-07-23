@@ -1,0 +1,62 @@
+# Source files
+src/
+tsconfig.json
+
+# Examples and demos
+examples/
+demo-*
+debug-*
+check-*
+cli.ts
+user-cli.ts
+index.ts
+database.ts
+test-connection.ts
+
+# Development files
+.env*
+migrations/
+services/
+modal/
+
+# Build tools
+tsx
+*.md.bak
+
+# Git
+.git
+.gitignore
+
+# CI/CD
+.github/
+.travis.yml
+.circleci/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+logs/
+*.log
+
+# Test files
+test/
+tests/
+*.test.ts
+*.spec.ts
+coverage/
+
+# Temporary files
+temp/
+tmp/
+.tmp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs that aren't needed in npm
+D1_ORM_COMPLETION_SUMMARY.md
+README_D1_ORM.md
+CONTRIBUTING.md

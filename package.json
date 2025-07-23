@@ -1,0 +1,60 @@
+{
+  "name": "@hireach/d1-orm",
+  "version": "1.0.0",
+  "description": "A powerful, type-safe ORM for Cloudflare D1 with a familiar Sequelize/Mongoose-like API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "test": "npx tsx test-local.ts",
+    "test:local": "npx tsx test-local.ts",
+    "example:simple": "cd examples && tsx simple-orm-example.ts",
+    "example:advanced": "cd examples && tsx advanced-models.ts", 
+    "example:relationships": "cd examples && tsx relationships-example.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hireach/d1-orm.git"
+  },
+  "keywords": [
+    "cloudflare",
+    "d1",
+    "orm",
+    "database",
+    "typescript",
+    "sql",
+    "sequelize",
+    "mongoose",
+    "query-builder",
+    "migrations",
+    "relationships"
+  ],
+  "author": "HiReach <info@hireach.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hireach/d1-orm/issues"
+  },
+  "homepage": "https://github.com/hireach/d1-orm#readme",
+  "peerDependencies": {
+    "@cloudflare/workers-types": "^4.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250723.0",
+    "@types/node": "^24.1.0",
+    "dotenv": "^17.2.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.0.0",
+    "uuid": "^11.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
