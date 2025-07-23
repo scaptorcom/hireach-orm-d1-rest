@@ -18,9 +18,9 @@ async function testBasicFunctionality() {
 
         // Step 2: Test ORM initialization
         console.log('🔧 Initializing ORM...');
-        const orm = new D1ORM({ 
-            database: db, 
-            logging: true 
+        const orm = new D1ORM({
+            database: db,
+            logging: true
         });
         console.log('✅ ORM initialized successfully\n');
 

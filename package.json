@@ -17,7 +17,7 @@
     "test": "npx tsx test-local.ts",
     "test:local": "npx tsx test-local.ts",
     "example:simple": "cd examples && tsx simple-orm-example.ts",
-    "example:advanced": "cd examples && tsx advanced-models.ts", 
+    "example:advanced": "cd examples && tsx advanced-models.ts",
     "example:relationships": "cd examples && tsx relationships-example.ts"
   },
   "repository": {

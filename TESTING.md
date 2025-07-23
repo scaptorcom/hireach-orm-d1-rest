@@ -13,6 +13,7 @@ nano .env
 ```
 
 Your `.env` should look like:
+
 ```env
 CLOUDFLARE_D1_TOKEN=your_actual_token_here
 CLOUDFLARE_ACCOUNT_ID=your_account_id_here
@@ -66,42 +67,44 @@ touch test-local.ts
 ```
 
 Example content for `test-local.ts`:
+
 ```typescript
-import { D1ORM, createDatabaseService } from './src/index.js';
+import { D1ORM, createDatabaseService } from "./src/index.js";
 
 async function testORM() {
-    try {
-        console.log('🚀 Testing D1 ORM locally...');
-        
-        // Test database connection
-        const db = await createDatabaseService();
-        console.log('✅ Database service created');
-        
-        // Test ORM initialization
-        const orm = new D1ORM({ database: db, logging: true });
-        console.log('✅ ORM initialized');
-        
-        // Test simple model definition
-        const TestModel = orm.define('TestModel', {
-            id: { type: 'number', primaryKey: true, autoIncrement: true },
-            name: { type: 'string', required: true }
-        });
-        console.log('✅ Model defined');
-        
-        // Test table creation
-        await orm.sync({ force: true });
-        console.log('✅ Tables synced');
-        
-        console.log('🎉 All tests passed!');
-    } catch (error) {
-        console.error('❌ Test failed:', error);
-    }
+  try {
+    console.log("🚀 Testing D1 ORM locally...");
+
+    // Test database connection
+    const db = await createDatabaseService();
+    console.log("✅ Database service created");
+
+    // Test ORM initialization
+    const orm = new D1ORM({ database: db, logging: true });
+    console.log("✅ ORM initialized");
+
+    // Test simple model definition
+    const TestModel = orm.define("TestModel", {
+      id: { type: "number", primaryKey: true, autoIncrement: true },
+      name: { type: "string", required: true },
+    });
+    console.log("✅ Model defined");
+
+    // Test table creation
+    await orm.sync({ force: true });
+    console.log("✅ Tables synced");
+
+    console.log("🎉 All tests passed!");
+  } catch (error) {
+    console.error("❌ Test failed:", error);
+  }
 }
 
 testORM();
 ```
 
 Then run:
+
 ```bash
 npx tsx test-local.ts
 ```
@@ -149,10 +152,11 @@ npx tsx your-test-file.ts
 ### **Enable Logging**
 
 In your test code:
+
 ```typescript
-const orm = new D1ORM({ 
-    database: db, 
-    logging: true  // Enable SQL logging
+const orm = new D1ORM({
+  database: db,
+  logging: true, // Enable SQL logging
 });
 ```
 
@@ -161,39 +165,42 @@ const orm = new D1ORM({
 ```typescript
 // Test connection first
 try {
-    const result = await db.query('SELECT 1 as test');
-    console.log('Database connected:', result);
+  const result = await db.query("SELECT 1 as test");
+  console.log("Database connected:", result);
 } catch (error) {
-    console.error('Database connection failed:', error);
+  console.error("Database connection failed:", error);
 }
 ```
 
 ### **Verify Environment Variables**
 
 ```typescript
-console.log('Environment check:', {
-    hasToken: !!process.env.CLOUDFLARE_D1_TOKEN,
-    hasAccountId: !!process.env.CLOUDFLARE_ACCOUNT_ID,
-    hasDatabaseId: !!process.env.CLOUDFLARE_DATABASE_ID,
-    hasDatabaseName: !!process.env.CLOUDFLARE_DATABASE_NAME
+console.log("Environment check:", {
+  hasToken: !!process.env.CLOUDFLARE_D1_TOKEN,
+  hasAccountId: !!process.env.CLOUDFLARE_ACCOUNT_ID,
+  hasDatabaseId: !!process.env.CLOUDFLARE_DATABASE_ID,
+  hasDatabaseName: !!process.env.CLOUDFLARE_DATABASE_NAME,
 });
 ```
 
 ## 📋 **Common Issues & Solutions**
 
 ### **Issue: Module not found**
+
 ```bash
 # Make sure you've built the project
 npm run build
 ```
 
 ### **Issue: Environment variables not loaded**
+
 ```bash
 # Make sure .env file exists and has correct values
 cat .env
 ```
 
 ### **Issue: D1 API errors**
+
 ```bash
 # Check your Cloudflare credentials
 # Ensure your D1 database exists
@@ -201,6 +208,7 @@ cat .env
 ```
 
 ### **Issue: TypeScript errors**
+
 ```bash
 # Check for compilation errors
 npx tsc --noEmit
@@ -209,10 +217,11 @@ npx tsc --noEmit
 ## 🎯 **Expected Output**
 
 When tests run successfully, you should see:
+
 ```
 🚀 Testing D1 ORM locally...
 ✅ Database service created
-✅ ORM initialized  
+✅ ORM initialized
 ✅ Model defined
 ✅ Tables synced
 ✅ User created: { id: 1, name: 'Test User', ... }
@@ -222,6 +231,7 @@ When tests run successfully, you should see:
 ## 🚀 **Next Steps**
 
 Once local testing works:
+
 1. Create more complex test scenarios
 2. Test edge cases and error handling
 3. Benchmark performance
