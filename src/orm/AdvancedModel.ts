@@ -66,12 +66,81 @@ export class AdvancedModel<T extends Record<string, any> = any> {
         try {
             const result = await this.db.query<R>(sql, params);
             if (!result.success) {
-                throw new Error(result.error || 'Query execution failed');
+                const error = result.error || 'Query execution failed';
+                throw new Error(this.parseDbError(error, sql));
             }
             return result;
         } catch (error) {
-            throw new Error(`Database error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            throw new Error(`Database error: ${this.parseDbError(errorMessage, sql)}`);
         }
+    }
+
+    /**
+     * Parse database errors to provide more meaningful messages
+     */
+    private parseDbError(error: string, sql: string): string {
+        const lowerError = error.toLowerCase();
+        const lowerSql = sql.toLowerCase();
+
+        // Check for common constraint violations
+        if (lowerError.includes('unique constraint') || lowerError.includes('duplicate')) {
+            // Try to extract field name from error or SQL
+            let field = 'field';
+            const uniqueMatch = error.match(/unique constraint failed: \w+\.(\w+)/i);
+            if (uniqueMatch) {
+                field = uniqueMatch[1];
+            } else if (lowerSql.includes('insert')) {
+                // Extract likely duplicate field from the context
+                if (lowerSql.includes('email')) field = 'email';
+                else if (lowerSql.includes('username')) field = 'username';
+                else if (lowerSql.includes('slug')) field = 'slug';
+                else if (lowerSql.includes('sku')) field = 'sku';
+            }
+
+            return `Duplicate entry detected. The ${field} already exists. Please use a different value.`;
+        }
+
+        if (lowerError.includes('foreign key constraint')) {
+            return `Foreign key constraint violation. The referenced record does not exist or cannot be deleted due to existing relationships.`;
+        }
+
+        if (lowerError.includes('not null constraint')) {
+            const notNullMatch = error.match(/not null constraint failed: \w+\.(\w+)/i);
+            const field = notNullMatch ? notNullMatch[1] : 'required field';
+            return `Missing required field: ${field}. This field cannot be empty.`;
+        }
+
+        if (lowerError.includes('check constraint')) {
+            return `Data validation failed. One or more values do not meet the required constraints.`;
+        }
+
+        if (lowerError.includes('http 400')) {
+            return `Bad Request - The database query was malformed or contains invalid data.`;
+        }
+
+        if (lowerError.includes('http 401')) {
+            return `Unauthorized - Invalid database credentials or access token.`;
+        }
+
+        if (lowerError.includes('http 403')) {
+            return `Forbidden - Insufficient permissions to perform this operation.`;
+        }
+
+        if (lowerError.includes('http 404')) {
+            return `Not Found - The specified database or resource does not exist.`;
+        }
+
+        if (lowerError.includes('http 429')) {
+            return `Rate Limited - Too many requests. Please try again later.`;
+        }
+
+        if (lowerError.includes('http 500')) {
+            return `Internal Server Error - A server-side error occurred.`;
+        }
+
+        // Return original error if no specific pattern matches
+        return error;
     }
 
     /**
@@ -125,6 +194,41 @@ export class AdvancedModel<T extends Record<string, any> = any> {
         }
 
         return createdRecord;
+    }
+
+    /**
+     * Create a new record only if it doesn't already exist based on specified fields
+     */
+    async createIfNotExists(data: Partial<T>, uniqueFields: (keyof T)[]): Promise<{ record: T; created: boolean }> {
+        // Build where condition for unique fields
+        const whereConditions: any = {};
+        for (const field of uniqueFields) {
+            if (data[field] !== undefined) {
+                whereConditions[field] = data[field];
+            }
+        }
+
+        // Check if record already exists
+        const existingRecord = await this.findOne({ where: whereConditions });
+
+        if (existingRecord) {
+            return { record: existingRecord, created: false };
+        }
+
+        // Create new record
+        try {
+            const newRecord = await this.create(data);
+            return { record: newRecord, created: true };
+        } catch (error) {
+            // If creation fails due to unique constraint (race condition), try to find the existing record
+            if (error instanceof Error && error.message.toLowerCase().includes('duplicate')) {
+                const existingRecord = await this.findOne({ where: whereConditions });
+                if (existingRecord) {
+                    return { record: existingRecord, created: false };
+                }
+            }
+            throw error;
+        }
     }
 
     /**
@@ -454,11 +558,20 @@ export class AdvancedModel<T extends Record<string, any> = any> {
      * Prepare data for INSERT
      */
     protected prepareDataForInsert(data: Partial<T>): Record<string, any> {
-        const prepared: Record<string, any> = { ...data };
+        const prepared: Record<string, any> = {};
 
-        // Add default values
+        // Copy data, but exclude auto-increment fields
+        for (const [fieldName, value] of Object.entries(data)) {
+            const fieldDef = this.schema.fields[fieldName];
+            // Exclude auto-increment fields unless explicitly provided
+            if (!fieldDef?.autoIncrement || value !== undefined) {
+                prepared[fieldName] = value;
+            }
+        }
+
+        // Add default values for non-auto-increment fields
         for (const [fieldName, fieldDef] of Object.entries(this.schema.fields)) {
-            if (prepared[fieldName] === undefined && fieldDef.default !== undefined) {
+            if (!fieldDef.autoIncrement && prepared[fieldName] === undefined && fieldDef.default !== undefined) {
                 if (typeof fieldDef.default === 'function') {
                     const defaultValue = fieldDef.default();
                     // Convert Date objects to ISO strings for database

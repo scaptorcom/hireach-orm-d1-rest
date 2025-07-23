@@ -4,10 +4,18 @@
  */
 
 import { D1ORM, createDatabaseService } from '../src/index.js';
+import dotenv from 'dotenv';
 
+dotenv.config(); // Load environment variables from .env file
 async function relationshipsExample() {
-    // Initialize database and ORM
-    const db = await createDatabaseService();
+    // Initialize database and ORM with explicit configuration
+    const db = await createDatabaseService({
+        token: process.env.CLOUDFLARE_D1_TOKEN!,
+        accountId: process.env.CLOUDFLARE_ACCOUNT_ID!,
+        databaseId: process.env.CLOUDFLARE_DATABASE_ID!,
+        databaseName: process.env.CLOUDFLARE_DATABASE_NAME!
+    });
+
     const orm = new D1ORM({
         database: db,
         logging: true

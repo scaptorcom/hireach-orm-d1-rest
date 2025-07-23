@@ -90,8 +90,8 @@ export class Schema {
         for (const [fieldName, fieldDef] of Object.entries(this.fields)) {
             const value = data[fieldName];
 
-            // Check required fields
-            if (fieldDef.required && (value === undefined || value === null)) {
+            // Check required fields (skip auto-increment fields during creation)
+            if (fieldDef.required && !fieldDef.autoIncrement && (value === undefined || value === null)) {
                 errors.push(`Field '${fieldName}' is required`);
                 continue;
             }

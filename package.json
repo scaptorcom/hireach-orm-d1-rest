@@ -1,6 +1,6 @@
 {
   "name": "hireach-d1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A powerful, type-safe ORM for Cloudflare D1 with a familiar Sequelize/Mongoose-like API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,9 +17,12 @@
     "test": "npx tsx test-local.ts",
     "test:local": "npx tsx test-local.ts",
     "test:ci": "echo \"CI tests passed - build verification only\"",
+    "test:errors": "npx tsx examples/test-error-handling.ts",
     "example:simple": "cd examples && tsx simple-orm-example.ts",
     "example:advanced": "cd examples && tsx advanced-models.ts",
-    "example:relationships": "cd examples && tsx relationships-example.ts"
+    "example:ultra": "cd examples && tsx ultra-advanced-example.ts",
+    "example:relationships": "cd examples && tsx relationships-example.ts",
+    "example:config": "cd examples && tsx configuration-examples.ts"
   },
   "repository": {
     "type": "git",

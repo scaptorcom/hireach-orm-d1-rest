@@ -24,6 +24,41 @@ A powerful, type-safe ORM for Cloudflare D1 that provides a familiar API similar
 npm install hireach-d1
 ```
 
+## 🔧 Configuration
+
+### **Method 1: Explicit Configuration (Recommended)**
+
+Pass your Cloudflare D1 credentials directly to the `createDatabaseService` function:
+
+```typescript
+import { D1ORM, createDatabaseService } from "hireach-d1";
+
+const db = await createDatabaseService({
+  token: "your_cloudflare_api_token",
+  accountId: "your_account_id",
+  databaseId: "your_database_id",
+  databaseName: "your_database_name",
+});
+
+const orm = new D1ORM({ database: db });
+```
+
+### **Method 2: Environment Variables (Legacy)**
+
+Set these environment variables and call `createDatabaseService()` without parameters:
+
+```env
+CLOUDFLARE_D1_TOKEN=your_cloudflare_api_token
+CLOUDFLARE_ACCOUNT_ID=your_account_id
+CLOUDFLARE_DATABASE_ID=your_database_id
+CLOUDFLARE_DATABASE_NAME=your_database_name
+```
+
+```typescript
+// Will automatically read from environment variables
+const db = await createDatabaseService();
+```
+
 ## 🎯 Quick Start
 
 ### 1. Initialize the ORM
@@ -31,8 +66,18 @@ npm install hireach-d1
 ```typescript
 import { D1ORM, createDatabaseService } from "hireach-d1";
 
-// Initialize database and ORM
-const db = await createDatabaseService();
+// Method 1: With explicit configuration (Recommended)
+const db = await createDatabaseService({
+  token: "your_cloudflare_api_token",
+  accountId: "your_account_id",
+  databaseId: "your_database_id",
+  databaseName: "your_database_name",
+});
+
+// Method 2: Using environment variables (Legacy)
+// Set CLOUDFLARE_D1_TOKEN, CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_DATABASE_ID, CLOUDFLARE_DATABASE_NAME
+// const db = await createDatabaseService();
+
 const orm = new D1ORM({
   database: db,
   logging: true,

@@ -11,9 +11,14 @@ async function testBasicFunctionality() {
     console.log('🚀 Starting D1 ORM Local Test...\n');
 
     try {
-        // Step 1: Test database service creation
+        // Step 1: Test database service creation with explicit config
         console.log('📡 Creating database service...');
-        const db = await createDatabaseService();
+        const db = await createDatabaseService({
+            token: process.env.CLOUDFLARE_D1_TOKEN!,
+            accountId: process.env.CLOUDFLARE_ACCOUNT_ID!,
+            databaseId: process.env.CLOUDFLARE_DATABASE_ID!,
+            databaseName: process.env.CLOUDFLARE_DATABASE_NAME!
+        });
         console.log('✅ Database service created successfully\n');
 
         // Step 2: Test ORM initialization

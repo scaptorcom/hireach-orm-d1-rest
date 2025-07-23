@@ -5,16 +5,13 @@ import { TableSchema, QueryResult, DatabaseInfo } from '../types/database.js';
 
 export class DatabaseService {
     private static instance: DatabaseService;
-    private dbManager: D1DatabaseManager;
-    private migrationManager: MigrationManager;
+    private dbManager: D1DatabaseManager | null = null;
+    private migrationManager: MigrationManager | null = null;
     private configManager: ConfigManager;
+    private initialized: boolean = false;
 
     private constructor() {
         this.configManager = ConfigManager.getInstance();
-        const config = this.configManager.getConfig();
-
-        this.dbManager = new D1DatabaseManager(config);
-        this.migrationManager = new MigrationManager(this.dbManager);
     }
 
     public static getInstance(): DatabaseService {
@@ -25,34 +22,79 @@ export class DatabaseService {
     }
 
     /**
-     * Initialize the database service
+     * Initialize the database service with comprehensive error handling
      */
     public async initialize(): Promise<void> {
-        console.log('Initializing database service...');
-
-        // Test connection
-        const isConnected = await this.dbManager.testConnection();
-        if (!isConnected) {
-            throw new Error('Failed to connect to the database');
+        if (this.initialized) {
+            return; // Already initialized
         }
 
-        console.log('Database connection established successfully');
-
-        // Run pending migrations
         try {
-            await this.migrationManager.runPendingMigrations();
+            console.log('🔄 Initializing database service...');
+
+            // Get configuration (this will now work after setConfig is called)
+            const config = this.configManager.getConfig();
+
+            // Initialize managers
+            this.dbManager = new D1DatabaseManager(config);
+            this.migrationManager = new MigrationManager(this.dbManager);
+
+            // Test connection with timeout
+            const connectionTimeout = 30000; // 30 seconds
+            const connectionPromise = this.dbManager.testConnection();
+            const timeoutPromise = new Promise<boolean>((_, reject) => {
+                setTimeout(() => reject(new Error('Connection timeout after 30 seconds')), connectionTimeout);
+            });
+
+            const isConnected = await Promise.race([connectionPromise, timeoutPromise]);
+
+            if (!isConnected) {
+                const error = new Error('Failed to establish database connection - check your configuration and network');
+                error.name = 'DatabaseConnectionError';
+                throw error;
+            }
+
+            console.log('✅ Database connection established successfully');
+
+            // Run pending migrations with error handling
+            try {
+                console.log('🔄 Checking for pending migrations...');
+                await this.migrationManager.runPendingMigrations();
+                console.log('✅ Migration check completed');
+            } catch (error) {
+                const migrationError = new Error(`Migration failed: ${error instanceof Error ? error.message : String(error)}`);
+                migrationError.name = 'MigrationError';
+                console.error('❌ Migration error:', error);
+                throw migrationError;
+            }
+
+            this.initialized = true;
+            console.log('🎉 Database service initialized successfully');
+
         } catch (error) {
-            console.error('Failed to run migrations:', error);
-            throw error;
+            // Enhanced error context for initialization failures
+            if (error instanceof Error) {
+                if (error.name === 'DatabaseConnectionError' || error.name === 'MigrationError' || error.name === 'ConfigurationError') {
+                    throw error; // Re-throw specific errors as-is
+                }
+
+                const initError = new Error(`Database service initialization failed: ${error.message}`);
+                initError.name = 'DatabaseInitializationError';
+                initError.stack = error.stack;
+                throw initError;
+            }
+
+            const initError = new Error(`Database service initialization failed: ${String(error)}`);
+            initError.name = 'DatabaseInitializationError';
+            throw initError;
         }
-
-        console.log('Database service initialized successfully');
-    }
-
-    /**
+    }    /**
      * Get database manager instance
      */
     public getDbManager(): D1DatabaseManager {
+        if (!this.dbManager) {
+            throw new Error('DatabaseService not initialized. Call initialize() first.');
+        }
         return this.dbManager;
     }
 
@@ -60,6 +102,9 @@ export class DatabaseService {
      * Get migration manager instance
      */
     public getMigrationManager(): MigrationManager {
+        if (!this.migrationManager) {
+            throw new Error('DatabaseService not initialized. Call initialize() first.');
+        }
         return this.migrationManager;
     }
 
@@ -73,52 +118,80 @@ export class DatabaseService {
     // Convenience methods that delegate to the database manager
 
     /**
-     * Execute a SQL query
+     * Execute a SQL query with enhanced error handling
      */
     public async query<T = any>(sql: string, params: any[] = []): Promise<QueryResult<T>> {
-        return await this.dbManager.query<T>(sql, params);
+        try {
+            if (!sql || typeof sql !== 'string' || sql.trim() === '') {
+                throw new Error('SQL query cannot be empty');
+            }
+
+            return await this.getDbManager().query<T>(sql, params);
+        } catch (error) {
+            const queryError = new Error(`Query execution failed: ${error instanceof Error ? error.message : String(error)}`);
+            queryError.name = 'QueryExecutionError';
+            throw queryError;
+        }
     }
 
     /**
-     * Execute multiple SQL statements in a batch
+     * Execute multiple SQL statements in a batch with enhanced error handling
      */
     public async batch(statements: Array<{ sql: string; params?: any[] }>): Promise<QueryResult[]> {
-        return await this.dbManager.batch(statements);
+        try {
+            if (!statements || !Array.isArray(statements) || statements.length === 0) {
+                throw new Error('Batch statements cannot be empty');
+            }
+
+            // Validate each statement
+            for (let i = 0; i < statements.length; i++) {
+                const stmt = statements[i];
+                if (!stmt.sql || typeof stmt.sql !== 'string' || stmt.sql.trim() === '') {
+                    throw new Error(`Statement ${i + 1} has invalid SQL`);
+                }
+            }
+
+            return await this.getDbManager().batch(statements);
+        } catch (error) {
+            const batchError = new Error(`Batch execution failed: ${error instanceof Error ? error.message : String(error)}`);
+            batchError.name = 'BatchExecutionError';
+            throw batchError;
+        }
     }
 
     /**
      * Get database information
      */
     public async getDatabaseInfo(): Promise<DatabaseInfo> {
-        return await this.dbManager.getDatabaseInfo();
+        return await this.getDbManager().getDatabaseInfo();
     }
 
     /**
      * List all tables
      */
     public async listTables(): Promise<Array<{ name: string; type: string }>> {
-        return await this.dbManager.listTables();
+        return await this.getDbManager().listTables();
     }
 
     /**
      * Get table schema
      */
     public async getTableSchema(tableName: string): Promise<TableSchema> {
-        return await this.dbManager.getTableSchema(tableName);
+        return await this.getDbManager().getTableSchema(tableName);
     }
 
     /**
      * Get all table schemas
      */
     public async getAllTableSchemas(): Promise<TableSchema[]> {
-        return await this.dbManager.getAllTableSchemas();
+        return await this.getDbManager().getAllTableSchemas();
     }
 
     /**
      * Check if a table exists
      */
     public async tableExists(tableName: string): Promise<boolean> {
-        return await this.dbManager.tableExists(tableName);
+        return await this.getDbManager().tableExists(tableName);
     }
 
     /**
@@ -129,10 +202,8 @@ export class DatabaseService {
         totalRecords: number;
         databaseSize: number;
     }> {
-        return await this.dbManager.getStats();
-    }
-
-    /**
+        return await this.getDbManager().getStats();
+    }    /**
      * Create a sample users table (useful for testing)
      */
     public async createSampleUsersTable(): Promise<QueryResult> {
@@ -213,16 +284,17 @@ export class DatabaseService {
         let status: 'healthy' | 'unhealthy' = 'healthy';
 
         // Check connection
-        const connectionOk = await this.dbManager.testConnection();
+        const connectionOk = this.dbManager ? await this.dbManager.testConnection() : false;
         if (!connectionOk) {
             errors.push('Database connection failed');
             status = 'unhealthy';
         }
 
         // Check configuration
-        const configOk = this.configManager.validateConfig();
+        const configValidation = this.configManager.validateConfig();
+        const configOk = configValidation.isValid;
         if (!configOk) {
-            errors.push('Configuration is invalid');
+            errors.push(`Configuration is invalid: ${configValidation.errors.join(', ')}`);
             status = 'unhealthy';
         }
 
@@ -232,12 +304,18 @@ export class DatabaseService {
         let appliedCount = 0;
 
         try {
-            const migrationInfo = await this.migrationManager.getMigrationStatus();
-            pendingCount = migrationInfo.pending;
-            appliedCount = migrationInfo.applied;
+            if (this.migrationManager) {
+                const migrationInfo = await this.migrationManager.getMigrationStatus();
+                pendingCount = migrationInfo.pending;
+                appliedCount = migrationInfo.applied;
 
-            if (pendingCount > 0) {
-                migrationStatus = 'pending';
+                if (pendingCount > 0) {
+                    migrationStatus = 'pending';
+                }
+            } else {
+                migrationStatus = 'error';
+                errors.push('Migration manager not initialized');
+                status = 'unhealthy';
             }
         } catch (error) {
             migrationStatus = 'error';
