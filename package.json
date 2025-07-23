@@ -38,7 +38,7 @@
     "migrations",
     "relationships"
   ],
-  "author": "HiReach <info@hireach.com>",
+  "author": "HiReach karansinghthundu@gmail.com",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/scaptorcom/hireach-orm-d1-rest/issues"
