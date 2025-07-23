@@ -14,6 +14,7 @@
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build",
+    "deploy:local": "npm run build && cp -r dist/* /Users/k9966/Documents/My-Projects/hireach/node_modules/hireach-d1/dist/",
     "test": "npx tsx test-local.ts",
     "test:local": "npx tsx test-local.ts",
     "test:ci": "echo \"CI tests passed - build verification only\"",

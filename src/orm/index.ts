@@ -4,13 +4,13 @@
  */
 
 // Main ORM class
-export { D1ORM, D1ORMOptions } from './D1ORM.js';
+export { D1ORM, D1ORMOptions } from './D1ORM';
 
 // Core classes
-export { AdvancedModel, ModelHooks, FindOptions, PaginatedResult } from './AdvancedModel.js';
-export { Schema, SchemaDefinition, SchemaOptions, FieldDefinition } from './Schema.js';
-export { QueryBuilder, WhereOperator, OrderDirection, JoinType } from './QueryBuilder.js';
+export { AdvancedModel, ModelHooks, FindOptions, PaginatedResult } from './AdvancedModel';
+export { Schema, SchemaDefinition, SchemaOptions, FieldDefinition } from './Schema';
+export { QueryBuilder, WhereOperator, OrderDirection, JoinType } from './QueryBuilder';
 
 // Re-export database service for convenience
-export { DatabaseService } from '../classes/DatabaseService.js';
-export { createDatabaseService } from '../database.js';
+export { DatabaseService } from '../classes/DatabaseService';
+export { createDatabaseService } from '../database';

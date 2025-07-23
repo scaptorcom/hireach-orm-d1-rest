@@ -64,6 +64,13 @@ export class AdvancedModel<T extends Record<string, any> = any> {
      */
     protected async executeQuery<R = any>(sql: string, params: any[] = []): Promise<QueryResult<R>> {
         try {
+            // Add debug logging for troubleshooting
+            const isDebugMode = process.env.NODE_ENV === 'development' || process.env.DEBUG_SQL === 'true';
+            if (isDebugMode) {
+                console.log('🔍 Executing SQL:', sql);
+                console.log('📋 Parameters:', params);
+            }
+
             const result = await this.db.query<R>(sql, params);
             if (!result.success) {
                 const error = result.error || 'Query execution failed';
@@ -72,7 +79,19 @@ export class AdvancedModel<T extends Record<string, any> = any> {
             return result;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            throw new Error(`Database error: ${this.parseDbError(errorMessage, sql)}`);
+
+            // Enhanced error with more context
+            const enhancedError = new Error(`Database error: ${this.parseDbError(errorMessage, sql)}`);
+
+            // Add debugging properties to the error
+            if (error instanceof Error) {
+                (enhancedError as any).originalError = error;
+                (enhancedError as any).sql = sql;
+                (enhancedError as any).params = params;
+                (enhancedError as any).tableName = this.tableName;
+            }
+
+            throw enhancedError;
         }
     }
 
@@ -108,6 +127,13 @@ export class AdvancedModel<T extends Record<string, any> = any> {
         if (lowerError.includes('not null constraint')) {
             const notNullMatch = error.match(/not null constraint failed: \w+\.(\w+)/i);
             const field = notNullMatch ? notNullMatch[1] : 'required field';
+
+            // Check if this field is marked as optional in ORM but required in DB
+            const fieldDef = this.schema.fields[field];
+            if (fieldDef && !fieldDef.required) {
+                return `Database schema mismatch: Field '${field}' is optional in your ORM schema but required in the database. Consider running migrations or providing a default value.`;
+            }
+
             return `Missing required field: ${field}. This field cannot be empty.`;
         }
 
@@ -116,7 +142,33 @@ export class AdvancedModel<T extends Record<string, any> = any> {
         }
 
         if (lowerError.includes('http 400')) {
-            return `Bad Request - The database query was malformed or contains invalid data.`;
+            if (lowerSql.includes('insert')) {
+                // Provide more specific debugging information for insert failures
+                const suggestions = [
+                    'Check if all required fields are provided',
+                    'Verify field types match your schema definition',
+                    'Ensure no fields exceed maximum length constraints',
+                    'Check for unique constraint violations',
+                    'Verify foreign key references exist'
+                ];
+
+                return `Database insert failed. The query was rejected by Cloudflare D1. This usually indicates:\n` +
+                    `• Schema mismatch between ORM and database\n` +
+                    `• Missing required fields or invalid data types\n` +
+                    `• Constraint violations (unique, foreign key, etc.)\n\n` +
+                    `SQL: ${sql.length > 200 ? sql.substring(0, 200) + '...' : sql}\n\n` +
+                    `Debugging suggestions:\n${suggestions.map(s => `• ${s}`).join('\n')}`;
+            }
+            if (lowerSql.includes('update')) {
+                return `Database update failed. Check field constraints and data types.\n` +
+                    `SQL: ${sql.length > 200 ? sql.substring(0, 200) + '...' : sql}`;
+            }
+            if (lowerSql.includes('select')) {
+                return `Database query failed. Check table name and field references.\n` +
+                    `SQL: ${sql.length > 200 ? sql.substring(0, 200) + '...' : sql}`;
+            }
+            return `Bad Request - The database query was malformed or contains invalid data.\n` +
+                `SQL: ${sql.length > 200 ? sql.substring(0, 200) + '...' : sql}`;
         }
 
         if (lowerError.includes('http 401')) {
@@ -161,6 +213,16 @@ export class AdvancedModel<T extends Record<string, any> = any> {
 
         // Prepare data with defaults and timestamps
         const preparedData = this.prepareDataForInsert(data);
+
+        // Add debug logging for insert operations
+        const isDebugMode = process.env.NODE_ENV === 'development' || process.env.DEBUG_SQL === 'true';
+        if (isDebugMode) {
+            console.log('🔍 Insert Debug Info:');
+            console.log('📝 Original data:', data);
+            console.log('🛠️ Prepared data:', preparedData);
+            console.log('📋 Schema fields:', Object.keys(this.schema.fields));
+            console.log('🏷️ Table name:', this.tableName);
+        }
 
         // Validate prepared data (after defaults are added)
         const validation = this.schema.validate(preparedData);
@@ -731,6 +793,28 @@ export class AdvancedModel<T extends Record<string, any> = any> {
             }
         }
 
+        // Handle potential schema mismatches: provide fallback defaults for optional fields
+        // that might still be required in the database schema
+        for (const [fieldName, fieldDef] of Object.entries(this.schema.fields)) {
+            if (!fieldDef.autoIncrement && !fieldDef.required && prepared[fieldName] === undefined) {
+                // Provide type-appropriate default values for optional fields
+                // This helps when ORM schema is relaxed but DB schema still has NOT NULL constraints
+                const fallbackDefaults: Record<string, any> = {
+                    string: '',
+                    number: 0,
+                    boolean: false,
+                    date: new Date().toISOString(),
+                    text: '',
+                    json: null
+                };
+
+                // Only add fallback if no explicit default was set
+                if (fieldDef.default === undefined && fallbackDefaults[fieldDef.type] !== undefined) {
+                    prepared[fieldName] = fallbackDefaults[fieldDef.type];
+                }
+            }
+        }
+
         // Handle timestamps
         if (this.schema.options.timestamps) {
             const now = new Date().toISOString();
@@ -858,5 +942,71 @@ export class AdvancedModel<T extends Record<string, any> = any> {
             default:
                 return true;
         }
+    }
+
+    /**
+     * Debug helper to provide detailed information about insert failures
+     */
+    public debugInsertData(data: Partial<T>): {
+        preparedData: Record<string, any>;
+        validation: { isValid: boolean; errors: string[] };
+        schemaInfo: Record<string, any>;
+        suggestions: string[];
+    } {
+        const preparedData = this.prepareDataForInsert(data);
+        const validation = this.schema.validate(preparedData);
+
+        const schemaInfo: Record<string, any> = {};
+        for (const [fieldName, fieldDef] of Object.entries(this.schema.fields)) {
+            schemaInfo[fieldName] = {
+                type: fieldDef.type,
+                required: fieldDef.required,
+                hasDefault: fieldDef.default !== undefined,
+                autoIncrement: fieldDef.autoIncrement || false,
+                unique: fieldDef.unique || false,
+                maxLength: fieldDef.maxLength,
+                enum: fieldDef.enum
+            };
+        }
+
+        const suggestions: string[] = [];
+
+        // Analyze potential issues
+        for (const [fieldName, fieldDef] of Object.entries(this.schema.fields)) {
+            const value = preparedData[fieldName];
+
+            if (fieldDef.required && !fieldDef.autoIncrement && (value === undefined || value === null)) {
+                suggestions.push(`Field '${fieldName}' is required but missing. Provide a value or add a default.`);
+            }
+
+            if (value !== undefined && value !== null) {
+                if (fieldDef.type === 'string' && typeof value !== 'string') {
+                    suggestions.push(`Field '${fieldName}' should be a string but got ${typeof value}.`);
+                }
+
+                if (fieldDef.type === 'number' && (typeof value !== 'number' || isNaN(value))) {
+                    suggestions.push(`Field '${fieldName}' should be a number but got ${typeof value}.`);
+                }
+
+                if (fieldDef.maxLength && typeof value === 'string' && value.length > fieldDef.maxLength) {
+                    suggestions.push(`Field '${fieldName}' exceeds maximum length of ${fieldDef.maxLength} characters.`);
+                }
+
+                if (fieldDef.enum && Array.isArray(fieldDef.enum) && !(fieldDef.enum as (string | number)[]).includes(value)) {
+                    suggestions.push(`Field '${fieldName}' must be one of: ${fieldDef.enum.join(', ')}.`);
+                }
+            }
+        }
+
+        if (suggestions.length === 0) {
+            suggestions.push('No obvious issues found. The error might be related to database constraints or D1 API issues.');
+        }
+
+        return {
+            preparedData,
+            validation,
+            schemaInfo,
+            suggestions
+        };
     }
 }
