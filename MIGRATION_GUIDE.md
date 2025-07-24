@@ -22,7 +22,7 @@ console.log(`Updated ${affectedRows} users`);
 console.log({
   duration: updateResult.meta.duration,
   rowsRead: updateResult.meta.rows_read,
-  rowsWritten: updateResult.meta.rows_written
+  rowsWritten: updateResult.meta.rows_written,
 });
 ```
 
@@ -51,25 +51,25 @@ Your existing code continues to work, plus you can now use Prisma-style syntax:
 ```typescript
 // ✅ EXISTING SYNTAX (still works)
 const users = await User.findAll({
-  select: ['id', 'name', 'email'],
-  orderBy: [{ field: 'created_at', direction: 'DESC' }],
+  select: ["id", "name", "email"],
+  orderBy: [{ field: "created_at", direction: "DESC" }],
   limit: 10,
-  offset: 20
+  offset: 20,
 });
 
 // 🆕 NEW PRISMA-STYLE SYNTAX (v1.2.0+)
 const users = await User.findAll({
   select: { id: true, name: true, email: true },
-  orderBy: { created_at: 'DESC' },
+  orderBy: { created_at: "DESC" },
   take: 10,
-  skip: 20
+  skip: 20,
 });
 
 // 🆕 MIXED SYNTAX (also works)
 const users = await User.findAll({
-  select: ['id', 'name'],           // Array format
-  orderBy: { created_at: 'DESC' },  // Object format
-  take: 10                          // Prisma-style
+  select: ["id", "name"], // Array format
+  orderBy: { created_at: "DESC" }, // Object format
+  take: 10, // Prisma-style
 });
 ```
 
@@ -97,23 +97,23 @@ const count = await User.count({ where: { active: true } });
 
 ```typescript
 // 🆕 NEW: Statistical operations
-const totalRevenue = await Payment.sum('amount');
-const averageAge = await User.avg('age');
-const oldestUser = await User.max('created_at');
+const totalRevenue = await Payment.sum("amount");
+const averageAge = await User.avg("age");
+const oldestUser = await User.max("created_at");
 
 // 🆕 NEW: Advanced statistics
-const stats = await User.stats('age', {
-  where: { active: true }
+const stats = await User.stats("age", {
+  where: { active: true },
 });
 // Returns: { count, sum, avg, min, max, median }
 
 // 🆕 NEW: Group operations
-const usersByRole = await User.groupBy(['role']);
+const usersByRole = await User.groupBy(["role"]);
 // Returns: [{ role: 'admin', count: 5 }]
 
 // 🆕 NEW: Distinct operations
-const uniqueCountries = await User.distinct('country');
-const uniqueCount = await User.countDistinct('country');
+const uniqueCountries = await User.distinct("country");
+const uniqueCount = await User.countDistinct("country");
 ```
 
 ### 5. Debug and Analysis Tools
@@ -122,14 +122,14 @@ const uniqueCount = await User.countDistinct('country');
 // 🆕 NEW: Debug data preparation
 const debugInfo = User.debugInsertData({
   name: "Test",
-  email: "test@example.com"
+  email: "test@example.com",
 });
 
 // 🆕 NEW: Table analysis
 const analysis = await User.analyzeTable();
 console.log({
   recordCount: analysis.recordCount,
-  suggestions: analysis.suggestions
+  suggestions: analysis.suggestions,
 });
 ```
 
@@ -142,11 +142,7 @@ No import changes required! The modular architecture is internal:
 import { D1ORM, createDatabaseService, AdvancedModel } from "hireach-d1";
 
 // 🆕 OPTIONAL: Import specific operation classes if needed
-import { 
-  BaseModel, 
-  CrudOperations, 
-  AggregateOperations 
-} from "hireach-d1";
+import { BaseModel, CrudOperations, AggregateOperations } from "hireach-d1";
 ```
 
 ## 🔍 How to Update Your Code
@@ -206,6 +202,7 @@ Gradually adopt new features:
 ### Common Migration Issues:
 
 1. **Update method errors**:
+
    ```typescript
    // Error: Cannot read property 'changes' of undefined
    // Fix: Check that you're accessing result.meta.changes
@@ -214,6 +211,7 @@ Gradually adopt new features:
    ```
 
 2. **TypeScript errors with new syntax**:
+
    ```bash
    # Solution: Update TypeScript definitions
    npm install hireach-d1@1.2.0 --save

@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - **Modular Architecture**: Complete refactoring of AdvancedModel into specialized operation classes
+
   - `BaseModel`: Core database operations and error handling
   - `CrudOperations`: Create, Read, Update, Delete operations
   - `UpsertOperations`: Update-or-Insert operations with method overloading
@@ -15,6 +16,7 @@ All notable changes to this project will be documented in this file.
   - `DebugOperations`: Debug and analysis tools
 
 - **Enhanced Aggregate Functions**: Comprehensive statistical operations
+
   - `sum()`, `avg()`, `min()`, `max()` - Basic aggregate functions
   - `count()` with flexible syntax: `count({ where: {...} })` and `count({...})`
   - `distinct()`, `countDistinct()` - Unique value operations
@@ -23,6 +25,7 @@ All notable changes to this project will be documented in this file.
   - `groupBy()` - Group records with aggregate counts
 
 - **Prisma-Style Syntax Support**: Enhanced FindOptions interface
+
   - `take` and `skip` aliases for `limit` and `offset`
   - Object format for `select`: `{ id: true, name: true, email: false }`
   - Object format for `orderBy`: `{ createdAt: 'DESC', name: 'ASC' }`
@@ -35,6 +38,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - **BREAKING**: `update()` method now returns `QueryResult<T>` instead of `number`
+
   - Provides access to full query metadata (duration, rows affected, etc.)
   - All dependent functions updated to extract `result.meta.changes`
   - Better debugging capabilities with detailed query information
@@ -47,6 +51,7 @@ All notable changes to this project will be documented in this file.
 ### Enhanced
 
 - **FindOptions Interface**: Support for multiple syntax styles
+
   - Array format: `select: ['id', 'name']`, `orderBy: [{ field: 'name', direction: 'ASC' }]`
   - Object format: `select: { id: true, name: true }`, `orderBy: { name: 'ASC' }`
   - String format: `orderBy: 'name'`
@@ -61,23 +66,24 @@ All notable changes to this project will be documented in this file.
 // ✅ New Prisma-style syntax (now supported)
 const payments = await Model.findAll({
   where: { userId },
-  orderBy: { createdAt: 'DESC' },  // Object format
-  take: 5,                         // Prisma-style limit
-  select: {                        // Object format
+  orderBy: { createdAt: "DESC" }, // Object format
+  take: 5, // Prisma-style limit
+  select: {
+    // Object format
     id: true,
     amount: true,
-    status: true
-  }
+    status: true,
+  },
 });
 
 // ✅ New count syntax
 const count = await Model.count({
-  where: { userId, status: 'completed' }
+  where: { userId, status: "completed" },
 });
 
 // ✅ Enhanced delete syntax
 const deleted = await Model.delete({
-  where: { userId }
+  where: { userId },
 });
 
 // ⚠️ Update method return type change
